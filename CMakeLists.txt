@@ -17,20 +17,19 @@ endif()
 
 set(RUST_STATIC_LIB "${RUST_DIR}/target/${CARGO_OUTPUT_DIR}/lib${RUST_LIB_NAME}.a")
 
-# Custom command to build the Rust library
-add_custom_command(
-    OUTPUT "${RUST_STATIC_LIB}"
+# Custom target that always runs cargo build
+add_custom_target(rust_target ALL
     COMMAND cargo build ${CARGO_FLAGS}
     WORKING_DIRECTORY "${RUST_DIR}"
     COMMENT "Building Rust static library"
     VERBATIM
 )
 
-# Custom target to depend on the output
-add_custom_target(rust_target ALL DEPENDS "${RUST_STATIC_LIB}")
-
 # Add the executable
 add_executable(simpleTFTPS-test tests/c/main.cpp include/simpletftps.hpp)
+
+# Ensure rust_target is built before the executable
+add_dependencies(simpleTFTPS-test rust_target)
 
 # Link the Rust library and its dependencies
 target_link_libraries(simpleTFTPS-test PRIVATE "${RUST_STATIC_LIB}" pthread dl)
