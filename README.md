@@ -5,6 +5,7 @@
 ## Features
 
 - **Core in Rust**: Fast, safe, and concurrent TFTP engine.
+- **Unified Build**: Simple `Makefile` to build everything (Rust, C++, Python).
 - **Easy Integration**: Native bindings for C++ and Python.
 - **Customizable**: Simple callback system to handle file requests and uploads.
 - **Multi-threaded**: Handles multiple client requests simultaneously using Rust threads.
@@ -13,104 +14,67 @@
 ## Prerequisites
 
 - **Rust**: [Installation guide](https://www.rust-lang.org/tools/install)
-- **CMake**: Version 3.20 or higher
 - **C++ Compiler**: GCC (G++) or Clang supporting C++17
 - **Python**: 3.14 or higher (for Python bindings)
-- **libcurl**: Used for the provided test suite
+- **Make**: To use the simplified build system
+- **libcurl**: Required for integration tests
 
-## Installation & Build
+## Quick Start
 
-### 1. Build the Rust Core
-First, compile the Rust static library:
+### Build Everything
+To build the Rust library, C++ examples, and Python extension:
 ```bash
-cd simpleTFTPS
-cargo build --release
-```
-This generates `libsimpleTFTPS.a` in `simpleTFTPS/target/release/`.
-
-### 2. Build C++ Bindings & Examples
-Using CMake:
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
-This produces the `simpleTFTPS-c` executable, which serves as a test/example.
 
-### 3. Build Python Bindings
-You can compile the Python extension manually or using `setup.py`:
+### Run All Tests
+To run Rust unit tests, C++ integration tests, and Python integration tests:
 ```bash
-# Manual compilation (ensure paths match your system)
-g++ -O3 -shared -fPIC include/simpletftps.cpp -Iinclude -I/usr/include/python3.14 \
-    simpleTFTPS/target/release/libsimpleTFTPS.a -lpthread -ldl \
-    -o simpleTFTPS.cpython-314-x86_64-linux-gnu.so
+make test
+```
+
+### Clean Up
+To remove all build artifacts:
+```bash
+make clean
 ```
 
 ## Usage
 
-### C++ Example
+### C++
+Include the header and link against the Rust static library. Use the `run()` function with your callbacks.
 ```cpp
 #include "simpletftps.hpp"
-#include <iostream>
-#include <cstring>
 
 extern "C" char* my_get_callback(const char* file) {
-    std::cout << "Client requested: " << file << std::endl;
-    return strdup("Hello from C++ callback!");
-}
-
-extern "C" char* my_put_callback(const char* file) {
-    std::cout << "Client uploading: " << file << std::endl;
-    return nullptr; // No-op
+    return strdup("Data content");
 }
 
 int main() {
-    char address[] = "127.0.0.1:6969";
-    run(my_get_callback, my_put_callback, address);
+    run(my_get_callback, nullptr, "127.0.0.1:6969");
     return 0;
 }
 ```
 
-### Python Example
+### Python
+Import the module and run the server in a thread (as `run` is blocking).
 ```python
 import simpleTFTPS
 import threading
-import time
 
 def cb_get(file):
-    print(f"GET request for: {file}")
-    return "Content for the client"
+    return "File content"
 
-def cb_put(file):
-    print(f"PUT request for: {file}")
-    return None
-
-# The run method is blocking, use a thread for background execution
-server_thread = threading.Thread(
-    target=simpleTFTPS.run, 
-    args=("127.0.0.1:9001", cb_get, cb_put),
-    daemon=True
-)
-server_thread.start()
-
-# Keep the main thread alive or perform other tasks
-while True:
-    time.sleep(1)
+threading.Thread(target=simpleTFTPS.run, args=("127.0.0.1:9001", cb_get, None), daemon=True).start()
 ```
 
-## Running Tests
+## Project Structure
 
-### C++ Tests
-```bash
-cd cmake-build-debug
-./simpleTFTPS-c
-```
-
-### Python Tests
-```bash
-pytest tests/python/tests.py
-```
+- `simpleTFTPS/`: Rust implementation of the TFTP engine.
+- `include/`: C++ header and Python binding implementation.
+- `tests/`: Integration tests for C++, Python, and Rust.
+- `Makefile`: Unified build system.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details (if applicable).
+This project is licensed under the MIT License.

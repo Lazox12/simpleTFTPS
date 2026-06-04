@@ -13,7 +13,7 @@ const char* MOCK_CONTENT = "Hello from simpleTFTPS C++ test!";
 
 extern "C" char* tftp_get(const char* file) {
     std::cout << "[Server] Request for file: " << file << std::endl;
-    std::ifstream file_stream("../tests/c/test.txt");
+    std::ifstream file_stream("tests/c/test.txt");
     if (file_stream.is_open()) {
         std::string content((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
         return strdup(content.c_str());
@@ -44,7 +44,6 @@ int main() {
     
     // Use curl to fetch the file. We expect it to succeed now.
     // tftp://host:port/path
-    std::system("echo '' > test_out.txt");
     std::system("curl -s tftp://127.0.0.1:6969/test.txt -o test_out.txt");
 
     FILE* out = popen("sha256sum test_out.txt","r");
