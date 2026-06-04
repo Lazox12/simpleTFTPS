@@ -3,11 +3,6 @@ stages:
   - test
   - deploy
 
-variables:
-  # Twine uses these variables automatically for authentication
-  TWINE_USERNAME: $TWINE_USERNAME
-  TWINE_PASSWORD: $TWINE_PASSWORD
-
 build-package:
   stage: build
   image: rust:latest
@@ -16,7 +11,7 @@ build-package:
     - apt-get install -y python3-pip python3-venv build-essential patchelf
   script:
     # Build the Rust static library first as it's required by setup.py
-    - cd simpleTFTPS && cargo build --release && cd ..
+    - make rust
     # Install build tools, setuptools_scm, and auditwheel
     - pip install --break-system-packages setuptools wheel auditwheel setuptools-scm
     # Build the wheel
@@ -44,13 +39,8 @@ run-tests:
 deploy-pypi:
   stage: deploy
   image: python:3.11-slim
-  variables:
-    # When using API tokens, the username is always __token__
-    TWINE_USERNAME: __token__
-    TWINE_PASSWORD: $TWINE_PASSWORD
   script:
     - pip install twine
-    - echo $TWINE_PASSWORD
     # Upload to PyPI, skipping if the version already exists
     - twine upload --skip-existing --repository testpypi dist/* --verbose
 

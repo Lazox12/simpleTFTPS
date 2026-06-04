@@ -10,6 +10,8 @@ mylib_module = Extension(
     libraries=['pthread', 'dl'],
     language='c++'
 )
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
 setup(
     name='simpleTFTPS',
@@ -21,4 +23,6 @@ setup(
     include_package_data=True,
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
 )
