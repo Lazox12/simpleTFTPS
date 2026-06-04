@@ -1,14 +1,20 @@
 from setuptools import setup, Extension
+import os
 
-# Define the C extension
+# Define the C++ extension
 mylib_module = Extension(
-    'simpleTFTPS-c',               # The name of the module you will import
-    sources=['include/simpletftps.c','include/simpletftps.h']    # The C source files to compile
+    'simpleTFTPS',
+    sources=['include/simpletftps.cpp'],
+    include_dirs=['include'],
+    extra_objects=['simpleTFTPS/target/release/libsimpleTFTPS.a'],
+    libraries=['pthread', 'dl'],
+    language='c++'
 )
 
 setup(
     name='simpleTFTPS',
     version='0.1.0',
     description='a simple TFTPS client',
-    ext_modules=[mylib_module], # Tell setuptools to build this extension
+    ext_modules=[mylib_module],
+    packages=[],
 )

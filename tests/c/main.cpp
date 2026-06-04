@@ -1,18 +1,24 @@
+#include <assert.h>
+
 #include "simpletftps.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 
 // Simple mock file content
 const char* MOCK_CONTENT = "Hello from simpleTFTPS C++ test!";
 
 extern "C" char* tftp_get(const char* file) {
     std::cout << "[Server] Request for file: " << file << std::endl;
-    // We return a pointer to the mock content.
-    // The Rust side will now safely copy this and NOT try to free it.
-    return (char*)MOCK_CONTENT;
+    std::ifstream file_stream("../tests/c/test.txt");
+    if (file_stream.is_open()) {
+        std::string content((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
+        return strdup(content.c_str());
+    }
+    return nullptr;
 }
 
 extern "C" char* tftp_put(const char* file) {
@@ -38,29 +44,13 @@ int main() {
     
     // Use curl to fetch the file. We expect it to succeed now.
     // tftp://host:port/path
-    int ret = std::system("curl -s tftp://127.0.0.1:6969/test.txt -o test_out.txt");
-    
-    if (ret == 0) {
-        std::cout << "[Client] Transfer successful!" << std::endl;
-        
-        // Verify content
-        FILE* f = fopen("test_out.txt", "r");
-        if (f) {
-            char buffer[128];
-            fgets(buffer, sizeof(buffer), f);
-            fclose(f);
-            if (strcmp(buffer, MOCK_CONTENT) == 0) {
-                std::cout << "[Client] Content verified: " << buffer << std::endl;
-                std::cout << "TEST PASSED" << std::endl;
-                return 0;
-            } else {
-                std::cerr << "[Client] Content mismatch! Got: " << buffer << std::endl;
-            }
-        }
-    } else {
-        std::cerr << "[Client] Transfer failed with code: " << ret << std::endl;
-    }
+    std::system("echo '' > test_out.txt");
+    std::system("curl -s tftp://127.0.0.1:6969/test.txt -o test_out.txt");
 
-    std::cout << "TEST FAILED" << std::endl;
-    return 1;
+    FILE* out = popen("sha256sum test_out.txt","r");
+    const auto str = static_cast<char *>(malloc(65));
+    fgets(str, 65, out);
+    assert(std::string(str)=="7a32493ca5058aa7065ab15cb6f91b43193109fd87c7d8fdefb26846acf12cc2");
+    free(str);
+    return 0;
 }
