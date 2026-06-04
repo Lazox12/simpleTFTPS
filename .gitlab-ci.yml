@@ -42,15 +42,10 @@ deploy-pypi:
 
   # --- ADD THIS BLOCK ---
   # This forces Twine to use your token instead of looking for OIDC
-  variables:
-    TWINE_USERNAME: "__token__"
-    TWINE_PASSWORD: "pypi-AgENdGVzdC5weXBpLm9yZwIkMWEwYTk2ODYtNjIxMy00ZmM0LWJkM2EtYjFhOWRiNzQ0ZDgyAAIqWzMsImRkZjY3NjliLTE5MzMtNGMyZi05OGMxLTE2Y2Y1ODUxYzk5YiJdAAAGIJ9Sty7weA62yUGQ-N5QcT-7C0T58cyfkc1jIitHpGey"
-  # ----------------------
-
   script:
     - pip install twine
     # Upload to PyPI, skipping if the version already exists
-    - twine upload --skip-existing --repository testpypi dist/* --verbose
+    - twine upload --skip-existing dist/* --verbose
 
   rules:
     - if: $CI_COMMIT_TAG
