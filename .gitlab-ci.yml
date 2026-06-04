@@ -41,6 +41,7 @@ deploy-pypi:
   image: python:3.11-slim
 
   script:
+    - echo "TWINE_USERNAME=$TWINE_USERNAME"
     - pip install twine
     # Upload to PyPI, skipping if the version already exists
     - twine upload --skip-existing dist/* --verbose
