@@ -15,9 +15,9 @@ build-package:
     - apt-get update -qy
     - apt-get install -y python3-pip python3-venv build-essential
   script:
-    - # Build the Rust static library first as it's required by setup.py
+    # Build the Rust static library first as it's required by setup.py
     - cd simpleTFTPS && cargo build --release && cd ..
-    - # Install build tools and create the python distribution
+    # Install build tools and create the python distribution
     - pip install --break-system-packages build
     - python3 -m build
   artifacts:
@@ -38,7 +38,7 @@ deploy-pypi:
   image: python:3.11-slim
   script:
     - pip install twine
-    - # Upload to PyPI, skipping if the version already exists
+    # Upload to PyPI, skipping if the version already exists
     - twine upload --skip-existing dist/*
   rules:
     - if: $CI_COMMIT_TAG
