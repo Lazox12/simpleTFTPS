@@ -51,7 +51,7 @@ deploy-pypi:
   script:
     - pip install twine
     # Upload to PyPI, skipping if the version already exists
-    - twine upload --skip-existing dist/*
+    - twine upload --skip-existing --repository testpypi dist/* --verbose
 
   rules:
     - if: $CI_COMMIT_TAG
