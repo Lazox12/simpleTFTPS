@@ -124,13 +124,12 @@ where
     }
 }
 pub fn send_error(err:ErrorID, sock:UdpSocket,addr:SocketAddr)->Result<(),Error>{
-    let _err_num = err.get_id();
+    let err_num = err.get_id();
 
-    let len = <ErrorID as Into<String>>::into(err.clone()).len() + 5;
-    let mut packet = Vec::with_capacity(len);
+    let mut packet = Vec::new();
     packet.extend_from_slice(&(Request::ERR as u16).to_be_bytes());
+    packet.extend_from_slice(&err_num.to_be_bytes());
     packet.extend_from_slice(CString::new(<ErrorID as Into<String>>::into(err).as_str())?.to_bytes_with_nul());
-    packet.extend_from_slice(&0u8.to_be_bytes());
     sock.send_to(packet.as_slice(),addr)?;
     Ok(())
 }

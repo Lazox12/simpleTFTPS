@@ -61,11 +61,15 @@ python: rust $(BUILD_DIR)
 rust_test:
 	cd $(RUST_DIR) && $(CARGO) test
 
-test: all venv rust_test
-	@echo "Running C++ tests..."
+c_test: all
 	./$(CPP_TEST_BIN)
-	@echo "Running Python tests..."
-	PYTHONPATH=$(BUILD_DIR) $(VENV_PYTHON) -m pytest $(TEST_PY_DIR)/tests.py
+
+python_test:venv all
+	dd if=/dev/urandom of=$(TEST_PY_DIR)/data/large_file.bin bs=1M count=16 iflag=fullblock #64M
+	PYTHONPATH=$(BUILD_DIR) $(VENV_PYTHON) -m pytest $(TEST_PY_DIR)/tests.py $(TEST_PY_DIR)/tests_dir.py
+
+test: rust_test c_test python_test
+
 
 clean:
 	rm -rf $(BUILD_DIR)
