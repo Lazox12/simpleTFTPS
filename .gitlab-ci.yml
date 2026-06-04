@@ -18,8 +18,10 @@ build-package:
     # Build the Rust static library first as it's required by setup.py
     - cd simpleTFTPS && cargo build --release && cd ..
     # Install build tools and create the python distribution
-    - pip install --break-system-packages build setuptools wheel
-    - python3 -m build --no-isolation
+    - pip install --break-system-packages setuptools wheel
+    - python3 setup.py bdist_wheel
+    - python3 setup.py sdist
+
   artifacts:
     paths:
       - dist/

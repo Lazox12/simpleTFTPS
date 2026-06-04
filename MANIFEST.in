@@ -1,0 +1,4 @@
+include include/*.hpp
+include simpleTFTPS/target/release/libsimpleTFTPS.a
+recursive-include simpleTFTPS/src *.rs
+include simpleTFTPS/Cargo.toml
