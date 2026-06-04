@@ -4,3 +4,5 @@ cmake-build-debug
 simpleTFTPS/Cargo.lock
 *.egg-info
 *.so
+build
+test_out.txt
