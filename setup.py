@@ -13,11 +13,11 @@ mylib_module = Extension(
 
 setup(
     name='simpleTFTPS',
-    version='0.1.0',
     description='a simple TFTPS client',
     ext_modules=[mylib_module],
     packages=[],
-    # Ensure headers and other files are included in the sdist
     package_data={'': ['include/*.hpp', 'simpleTFTPS/target/release/libsimpleTFTPS.a']},
     include_package_data=True,
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
 )

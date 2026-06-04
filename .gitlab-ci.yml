@@ -17,14 +17,20 @@ build-package:
   script:
     # Build the Rust static library first as it's required by setup.py
     - cd simpleTFTPS && cargo build --release && cd ..
-    # Install build tools and create the python distribution
-    - pip install --break-system-packages setuptools wheel
+    # Install build tools and auditwheel
+    - pip install --break-system-packages setuptools wheel auditwheel
+    # Build the wheel
     - python3 setup.py bdist_wheel
+    # Repair the wheel to be manylinux compatible
+    - auditwheel repair dist/*.whl -w dist/
+    # Remove the original non-compliant wheel
+    - rm dist/*-linux_x86_64.whl
+    # Build the source distribution
     - python3 setup.py sdist
-
   artifacts:
     paths:
       - dist/
+
 
 run-tests:
   stage: test
@@ -38,10 +44,15 @@ run-tests:
 deploy-pypi:
   stage: deploy
   image: python:3.11-slim
+  variables:
+    # When using API tokens, the username is always __token__
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $TWINE_PASSWORD
   script:
     - pip install twine
     # Upload to PyPI, skipping if the version already exists
-    - twine upload --skip-existing dist/*
+    - twine upload --skip-existing --repository testpypi dist/*
+
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
