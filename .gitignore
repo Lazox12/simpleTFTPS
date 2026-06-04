@@ -6,3 +6,4 @@ simpleTFTPS/Cargo.lock
 *.so
 build
 test_out.txt
+log.txt
