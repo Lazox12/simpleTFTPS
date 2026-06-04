@@ -17,4 +17,7 @@ setup(
     description='a simple TFTPS client',
     ext_modules=[mylib_module],
     packages=[],
+    # Ensure headers and other files are included in the sdist
+    package_data={'': ['include/*.hpp', 'simpleTFTPS/target/release/libsimpleTFTPS.a']},
+    include_package_data=True,
 )
