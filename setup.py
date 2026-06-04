@@ -11,8 +11,21 @@ mylib_module = Extension(
     language='c++'
 )
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
+    name='simpleTFTPS',
+    description='a simple TFTP server written in rust with read and write callbacks',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author="lazox12",
+    use_scm_version={
+        'local_scheme': 'no-local-version'
+    },
+    setup_requires=['setuptools_scm'],
     ext_modules=[mylib_module],
+    packages=[],
     # Ensure headers and other files are included in the sdist
     package_data={'': ['include/*.hpp', 'simpleTFTPS/target/release/libsimpleTFTPS.a']},
     include_package_data=True,

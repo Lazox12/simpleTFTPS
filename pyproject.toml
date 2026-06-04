@@ -2,20 +2,6 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "simpleTFTPS"
-dynamic = ["version"]
-description = "a simple TFTP server written in rust with read and write callbacks"
-readme = "README.md"
-requires-python = ">=3.7"
-license = {text = "MIT"}
-authors = [
-    {name = "lazox12"},
-]
-dependencies = [
-    "pytest>=9.0.3",
-]
-
 [tool.setuptools_scm]
 # Enable setuptools_scm
 
