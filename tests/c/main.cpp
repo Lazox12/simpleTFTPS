@@ -50,6 +50,7 @@ int main() {
     FILE* out = popen("sha256sum test_out.txt","r");
     const auto str = static_cast<char *>(malloc(65));
     fgets(str, 65, out);
+    std::cout << "[Client] Hash: " << str << std::endl;
     assert(std::string(str)=="7a32493ca5058aa7065ab15cb6f91b43193109fd87c7d8fdefb26846acf12cc2");
     free(str);
     return 0;

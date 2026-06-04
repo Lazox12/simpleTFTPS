@@ -7,7 +7,6 @@ name = "simpleTFTPS"
 version = "0.1.0"
 description = "a simple TFTP server writen in rust with read and write callbacks"
 dependencies = [
-    "pycurl>=7.46.0",
     "pytest>=9.0.3",
 ]
 

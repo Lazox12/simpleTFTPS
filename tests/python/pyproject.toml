@@ -4,6 +4,5 @@ version = "0.1.0"
 description = "simple TFTPS python test"
 requires-python = ">=3.14"
 dependencies = [
-    "pycurl>=7.46.0",
     "pytest>=9.0.3",
 ]
