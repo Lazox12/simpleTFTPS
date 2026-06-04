@@ -44,7 +44,7 @@ deploy-pypi:
   # This forces Twine to use your token instead of looking for OIDC
   variables:
     TWINE_USERNAME: "__token__"
-    TWINE_PASSWORD: $TEST_PYPI_TOKEN
+    TWINE_PASSWORD: "pypi-AgENdGVzdC5weXBpLm9yZwIkMWEwYTk2ODYtNjIxMy00ZmM0LWJkM2EtYjFhOWRiNzQ0ZDgyAAIqWzMsImRkZjY3NjliLTE5MzMtNGMyZi05OGMxLTE2Y2Y1ODUxYzk5YiJdAAAGIJ9Sty7weA62yUGQ-N5QcT-7C0T58cyfkc1jIitHpGey"
   # ----------------------
 
   script:
