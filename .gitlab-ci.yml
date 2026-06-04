@@ -13,12 +13,12 @@ build-package:
   image: rust:latest
   before_script:
     - apt-get update -qy
-    - apt-get install -y python3-pip python3-venv build-essential
+    - apt-get install -y python3-pip python3-venv build-essential patchelf
   script:
     # Build the Rust static library first as it's required by setup.py
     - cd simpleTFTPS && cargo build --release && cd ..
-    # Install build tools and auditwheel
-    - pip install --break-system-packages setuptools wheel auditwheel
+    # Install build tools, setuptools_scm, and auditwheel
+    - pip install --break-system-packages setuptools wheel auditwheel setuptools-scm
     # Build the wheel
     - python3 setup.py bdist_wheel
     # Repair the wheel to be manylinux compatible
@@ -37,7 +37,7 @@ run-tests:
   image: rust:latest
   before_script:
     - apt-get update -qy
-    - apt-get install -y python3-pip python3-venv build-essential
+    - apt-get install -y python3-pip python3-venv build-essential patchelf
   script:
     - make test
 
