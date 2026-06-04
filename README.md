@@ -2,6 +2,8 @@
 
 `simpleTFTPS` is a high-performance TFTP (Trivial File Transfer Protocol) server written in Rust, providing seamless integration for C++ and Python through native bindings. It allows developers to implement custom `GET` and `PUT` logic via simple callbacks.
 
+- **Sources**: all sources are available at [https://gl2.aws.paperboat.cz/lazox12/pytftps](https://gl2.aws.paperboat.cz/lazox12/pytftps), or at a mirror at [https://github.com/Lazox12/simpleTFTPS](https://github.com/Lazox12/simpleTFTPS)
+
 ## Features
 
 - **Core in Rust**: Fast, safe, and concurrent TFTP engine.
