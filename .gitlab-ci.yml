@@ -50,6 +50,7 @@ deploy-pypi:
     TWINE_PASSWORD: $TWINE_PASSWORD
   script:
     - pip install twine
+    - echo $TWINE_PASSWORD
     # Upload to PyPI, skipping if the version already exists
     - twine upload --skip-existing --repository testpypi dist/* --verbose
 
