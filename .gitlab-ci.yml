@@ -40,13 +40,6 @@ deploy-pypi:
   stage: deploy
   image: python:3.11-slim
 
-  # --- ADD THIS BLOCK ---
-  # This forces Twine to use your token instead of looking for OIDC
-  variables:
-    TWINE_USERNAME: "__token__"
-    TWINE_PASSWORD: $TWINE_PASSWORD
-  # ----------------------
-
   script:
     - pip install twine
     # Upload to PyPI, skipping if the version already exists
