@@ -67,7 +67,10 @@ import threading
 def cb_get(file):
     return "File content"
 
-threading.Thread(target=simpleTFTPS.run, args=("127.0.0.1:9001", cb_get, None), daemon=True).start()
+def cb_put(file):
+    return False
+
+threading.Thread(target=simpleTFTPS.run, args=("127.0.0.1:9001", cb_get, cb_put), daemon=True).start()
 ```
 
 ## Project Structure
