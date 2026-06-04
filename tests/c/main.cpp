@@ -11,17 +11,19 @@
 // Simple mock file content
 const char* MOCK_CONTENT = "Hello from simpleTFTPS C++ test!";
 
-extern "C" char* tftp_get(const char* file) {
+extern "C" char* tftp_get(const char* file, size_t* out_len) {
     std::cout << "[Server] Request for file: " << file << std::endl;
     std::ifstream file_stream("tests/c/test.txt");
     if (file_stream.is_open()) {
         std::string content((std::istreambuf_iterator<char>(file_stream)), std::istreambuf_iterator<char>());
+        *out_len = content.length();
         return strdup(content.c_str());
     }
     return nullptr;
 }
 
-extern "C" char* tftp_put(const char* file) {
+extern "C" char* tftp_put(const char* file, size_t* out_len) {
+    (void)out_len;
     std::cout << "[Server] Putting file: " << file << std::endl;
     return nullptr;
 }

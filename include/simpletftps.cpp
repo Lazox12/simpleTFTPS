@@ -10,8 +10,8 @@
 static PyObject* callback_get = nullptr;
 static PyObject* callback_put = nullptr;
 
-char* inner_get(const char* file);
-char* inner_put(const char* file);
+char* inner_get(const char* file, size_t* out_len);
+char* inner_put(const char* file, size_t* out_len);
 
 static PyObject* py_run(PyObject* self, PyObject* args) {
     char* address;
@@ -46,7 +46,7 @@ static PyObject* py_run(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-char* inner_get(const char* file) {
+char* inner_get(const char* file, size_t* out_len) {
     PyGILState_STATE gstate = PyGILState_Ensure();
     
     if (callback_get == nullptr) {
@@ -69,25 +69,31 @@ char* inner_get(const char* file) {
         return nullptr;
     }
     
-    char* c_ret_str = nullptr;
+    char* c_ret = nullptr;
+    Py_ssize_t py_len = 0;
+    char* py_data = nullptr;
+
     if (PyUnicode_Check(result)) {
-        const char* py_ret_str = PyUnicode_AsUTF8(result);
-        if (py_ret_str) {
-            c_ret_str = strdup(py_ret_str);
+        py_data = (char*)PyUnicode_AsUTF8AndSize(result, &py_len);
+        if (py_data) {
+            c_ret = (char*)malloc(py_len);
+            memcpy(c_ret, py_data, py_len);
+            *out_len = (size_t)py_len;
         }
     } else if (PyBytes_Check(result)) {
-        const char* py_ret_str = PyBytes_AsString(result);
-        if (py_ret_str) {
-            c_ret_str = strdup(py_ret_str);
+        if (PyBytes_AsStringAndSize(result, &py_data, &py_len) != -1) {
+            c_ret = (char*)malloc(py_len);
+            memcpy(c_ret, py_data, py_len);
+            *out_len = (size_t)py_len;
         }
     }
     
     Py_DECREF(result);
     PyGILState_Release(gstate);
-    return c_ret_str;
+    return c_ret;
 }
 
-char* inner_put(const char* file) {
+char* inner_put(const char* file, size_t* out_len) {
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (callback_put == nullptr) {
@@ -110,22 +116,28 @@ char* inner_put(const char* file) {
         return nullptr;
     }
     
-    char* c_ret_str = nullptr;
+    char* c_ret = nullptr;
+    Py_ssize_t py_len = 0;
+    char* py_data = nullptr;
+
     if (PyUnicode_Check(result)) {
-        const char* py_ret_str = PyUnicode_AsUTF8(result);
-        if (py_ret_str) {
-            c_ret_str = strdup(py_ret_str);
+        py_data = (char*)PyUnicode_AsUTF8AndSize(result, &py_len);
+        if (py_data) {
+            c_ret = (char*)malloc(py_len);
+            memcpy(c_ret, py_data, py_len);
+            *out_len = (size_t)py_len;
         }
     } else if (PyBytes_Check(result)) {
-        const char* py_ret_str = PyBytes_AsString(result);
-        if (py_ret_str) {
-            c_ret_str = strdup(py_ret_str);
+        if (PyBytes_AsStringAndSize(result, &py_data, &py_len) != -1) {
+            c_ret = (char*)malloc(py_len);
+            memcpy(c_ret, py_data, py_len);
+            *out_len = (size_t)py_len;
         }
     }
     
     Py_DECREF(result);
     PyGILState_Release(gstate);
-    return c_ret_str;
+    return c_ret;
 }
 
 static PyObject* py_stop(PyObject* self, PyObject* args) {

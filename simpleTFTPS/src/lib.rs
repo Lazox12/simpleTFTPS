@@ -135,11 +135,15 @@ pub fn send_error(err:ErrorID, sock:UdpSocket,addr:SocketAddr)->Result<(),Error>
     Ok(())
 }
 
+unsafe extern "C" {
+    fn free(ptr: *mut std::ffi::c_void);
+}
+
 //to run from c
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn run(
-    callback_get: unsafe extern "C" fn(file: *const c_char) -> *mut c_char,
-    callback_put: unsafe extern "C" fn(file: *const c_char) -> *mut c_char,
+    callback_get: unsafe extern "C" fn(file: *const c_char, len: *mut usize) -> *mut c_char,
+    callback_put: unsafe extern "C" fn(file: *const c_char, len: *mut usize) -> *mut c_char,
     address: *const c_char
 ) {
     if address.is_null() {
@@ -151,23 +155,27 @@ pub unsafe extern "C" fn run(
 
     let wrapped_get = move |file: String| {
         let c_file = CString::new(file).unwrap();
-        let ptr = unsafe { callback_get(c_file.as_ptr()) };
+        let mut len: usize = 0;
+        let ptr = unsafe { callback_get(c_file.as_ptr(), &mut len) };
         if ptr.is_null() {
             None
         } else {
-            let s = unsafe { CStr::from_ptr(ptr) };
-            Some(s.to_bytes().to_vec())
+            let data = unsafe { std::slice::from_raw_parts(ptr as *const u8, len) }.to_vec();
+            unsafe { free(ptr as *mut _) };
+            Some(data)
         }
     };
 
     let wrapped_put = move |file: String| {
         let c_file = CString::new(file).unwrap();
-        let ptr = unsafe { callback_put(c_file.as_ptr()) };
+        let mut len: usize = 0;
+        let ptr = unsafe { callback_put(c_file.as_ptr(), &mut len) };
         if ptr.is_null() {
             None
         } else {
-            let s = unsafe { CStr::from_ptr(ptr) };
-            Some(s.to_bytes().to_vec())
+            let data = unsafe { std::slice::from_raw_parts(ptr as *const u8, len) }.to_vec();
+            unsafe { free(ptr as *mut _) };
+            Some(data)
         }
     };
 
