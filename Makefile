@@ -3,8 +3,8 @@
 # Configurable variables
 CXX = g++
 CARGO = cargo
-PYTHON = python3.14
-PYTHON_CONFIG = $(PYTHON)-config
+PYTHON = python3
+PYTHON_CONFIG = python3-config
 
 # Paths
 RUST_DIR = simpleTFTPS

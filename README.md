@@ -9,13 +9,13 @@
 - **Easy Integration**: Native bindings for C++ and Python.
 - **Customizable**: Simple callback system to handle file requests and uploads.
 - **Multi-threaded**: Handles multiple client requests simultaneously using Rust threads.
-- **Modern Python Support**: Compatible with Python 3.14+ (GIL-safe).
+- **Modern Python Support**: Compatible with Python 3.7+ (GIL-safe).
 
 ## Prerequisites
 
 - **Rust**: [Installation guide](https://www.rust-lang.org/tools/install)
 - **C++ Compiler**: GCC (G++) or Clang supporting C++17
-- **Python**: 3.14 or higher (for Python bindings)
+- **Python**: Python 3.7 or higher (for Python bindings)
 - **Make**: To use the simplified build system
 - **libcurl**: Required for integration tests
 

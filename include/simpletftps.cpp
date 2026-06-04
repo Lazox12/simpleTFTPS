@@ -1,7 +1,7 @@
 
+#include <Python.h>
 #include "simpletftps.hpp"
 #include <csignal>
-#include <python3.14/Python.h>
 #include <unistd.h>
 #include <cstring>
 #include <cstdio>
