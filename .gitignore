@@ -1,0 +1,4 @@
+simpleTFTPS/target
+cmake-build-debug
+.idea
+simpleTFTPS/Cargo.lock

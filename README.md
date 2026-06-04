@@ -27,9 +27,9 @@ git push -uf origin main
 ## Collaborate with your team
 
 * [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
+* [Create a new merge Request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
 * [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
+* [Enable merge Request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
 * [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
 
 ## Test and Deploy
@@ -90,4 +90,4 @@ Show your appreciation to those who have contributed to the project.
 For open source projects, say how it is licensed.
 
 ## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit Request for maintainers.
