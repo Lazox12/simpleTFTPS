@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=40.8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simpleTFTPS"
+version = "0.1.0"
+description = "a simple TFTP server writen in rust with read and write callbacks"
+
+[tool.uv.workspace]
+members = [
+    "tests/python",
+]
