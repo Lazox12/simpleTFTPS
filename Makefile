@@ -23,8 +23,10 @@ PYTHON_SUFFIX = $(shell $(PYTHON_CONFIG) --extension-suffix)
 # Targets
 PYTHON_SO = $(BUILD_DIR)/simpleTFTPS$(PYTHON_SUFFIX)
 CPP_TEST_BIN = $(BUILD_DIR)/simpleTFTPS-c
+VENV = .venv
+VENV_PYTHON = $(VENV)/bin/python
 
-.PHONY: all clean rust cpp python test help
+.PHONY: all clean rust cpp python test help venv
 
 all: $(BUILD_DIR) rust cpp python
 
@@ -34,11 +36,18 @@ help:
 	@echo "  rust     - Build the Rust core library"
 	@echo "  cpp      - Build the C++ test/example executable"
 	@echo "  python   - Build the Python extension module"
-	@echo "  test     - Run both C++ and Python tests"
+	@echo "  venv     - Create Python virtual environment and install dependencies"
+	@echo "  test     - Run Rust, C++, and Python tests"
 	@echo "  clean    - Remove build artifacts"
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
+
+venv: $(VENV_PYTHON)
+
+$(VENV_PYTHON):
+	$(PYTHON) -m venv $(VENV)
+	$(VENV_PYTHON) -m pip install pytest
 
 rust:
 	cd $(RUST_DIR) && $(CARGO) build --release
@@ -52,11 +61,11 @@ python: rust $(BUILD_DIR)
 rust_test:
 	cd $(RUST_DIR) && $(CARGO) test
 
-test: all rust_test
+test: all venv rust_test
 	@echo "Running C++ tests..."
 	./$(CPP_TEST_BIN)
 	@echo "Running Python tests..."
-	PYTHONPATH=$(BUILD_DIR) .venv/bin/python -m pytest $(TEST_PY_DIR)/tests.py
+	PYTHONPATH=$(BUILD_DIR) $(VENV_PYTHON) -m pytest $(TEST_PY_DIR)/tests.py
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -64,3 +73,5 @@ clean:
 	cd $(RUST_DIR) && $(CARGO) clean
 	rm -f test_out.txt test_out_py.txt
 	rm -f simpleTFTPS.cpython-314-x86_64-linux-gnu.so simpleTFTPS-c
+	rm -rf .venv
+	rm -rf tests/python/.venv
