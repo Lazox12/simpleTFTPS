@@ -2,3 +2,5 @@ simpleTFTPS/target
 cmake-build-debug
 .idea
 simpleTFTPS/Cargo.lock
+*.egg-info
+*.so
