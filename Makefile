@@ -79,3 +79,6 @@ clean:
 	rm -f simpleTFTPS.cpython-314-x86_64-linux-gnu.so simpleTFTPS-c
 	rm -rf .venv
 	rm -rf tests/python/.venv
+
+run_server:
+	sudo PYTHONPATH=build .venv/bin/python tests/python/serve_file.py tests/python/data/ipxe.efi 0.0.0.0:69

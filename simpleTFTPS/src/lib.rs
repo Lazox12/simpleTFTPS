@@ -1,10 +1,13 @@
+extern crate core;
 
+use core::time;
 use std::ffi::{c_char, CStr, CString};
 pub mod error;
 pub mod encode;
 
-use std::net::{SocketAddr, UdpSocket};
+use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::thread;
+use std::thread::sleep;
 use error::Error;
 use encode::TftpEncoding;
 use crate::encode::tftp_encode;
@@ -42,55 +45,74 @@ where
                     .map_err(|_| Error::Str("Invalid or missing encoding".to_string()))?;
                 let encoding = TftpEncoding::try_from(raw_encoding_cstr.to_owned().to_str().unwrap_or("octet").to_string())?;
 
-                let sock = UdpSocket::bind("127.0.0.1:0")?; // open socket on a new emply port for the current Request
+                let options_start = encoding_start + raw_encoding_cstr.to_bytes().len()+1;
+                let options_raw = &buf[options_start..];
+                let mut options = vec![];
+                let mut i = 0usize;
+                loop{
+                    let s = CStr::from_bytes_until_nul(&options_raw[i..]).map_err(|_| Error::Str("Invalid or missing option".to_string()))?.to_str()?;
+                    i+=s.len();
+                    i+=1;
+                    if(s.len()==0){
+                        break;
+                    }
+                    options.append(&mut vec![s.to_string()]);
+                }
+
+                let options = TftpOption::from_vec(options)?;
+                let mut accepted_options = vec![];
+                let sock = UdpSocket::bind(SocketAddr::new(IpAddr::from([0,0,0,0]),9002))?; // open socket on a new emply port for the current Request
 
                 match req {
                     Request::RRQ => {
+                        let packet_len=options
+                            .iter()
+                            .find(|x| {x.name==TftpOptionType::blksize})
+                            .map(|x|x.value)
+                            .unwrap_or(512);
+
+                        if packet_len!=512{
+                            accepted_options.push(TftpOption{name:TftpOptionType::blksize,value:packet_len});
+                        }
+
                         let data_raw = callback_get(file_name).ok_or_else(|| ErrorID::FileNotFound("file not found".to_string()));
                         if data_raw.is_err() {
                             send_error(data_raw.clone().err().unwrap(), sock, addr)?;
                             return Err(Error::from(<ErrorID as Into<String>>::into(data_raw.err().unwrap())))
                         }
+
                         let data = tftp_encode(&data_raw.unwrap(), encoding);
-                        let packet_num = (data.len() as f32 / 512.0).ceil() as u16;
-                        
+                        let packet_num = (data.len() as f32 / packet_len as f32).ceil() as u16;
+
+                        if options.iter().find(|x| {x.name==TftpOptionType::tsize}).is_some(){ //if recieved transfer size request
+                            accepted_options.push(TftpOption{name:TftpOptionType::tsize,value:data.len()});
+                        }
+                        send_oack(&sock,addr,accepted_options)?;
+
                         for i in 1..=packet_num {
-                            let mut packet = Vec::with_capacity(516);
+                            let mut packet = Vec::with_capacity(packet_len+4);//2 for id, 2 for block number
                             packet.extend_from_slice(&(Request::DATA as u16).to_be_bytes());
                             packet.extend_from_slice(&i.to_be_bytes());
-                            let start = ((i as usize) - 1) * 512;
-                            let end = (i as usize) * 512;
+                            let start = ((i as usize) - 1) * packet_len;
+                            let end = (i as usize) * packet_len;
                             if end > data.len() {
                                 packet.extend_from_slice(&data[start..]);
                             }else{
                                 packet.extend_from_slice(&data[start..end]);
                             }
+                            println!("sending packet {} of {} from port {}",i,packet_num, sock.local_addr().unwrap().port());
                             sock.send_to(packet.as_slice(), addr)?;
                             
                             let mut ack_buf = [0u8; 1024];
-                            let (_ack_len, _ack_addr) = sock.recv_from(&mut ack_buf)?;
-                            let ack_req_num = ((ack_buf[0] as u16) << 8) + (ack_buf[1] as u16);
-                            let ack_req: Request = Request::try_from(ack_req_num)?;
-                            match ack_req {
-                                Request::ACK => {
-                                    let ack_block = ((ack_buf[2] as u16) << 8) + (ack_buf[3] as u16);
-                                    if ack_block != i {
-                                        return Err(Error::Str(format!("invalid ACK block: expected {}, got {}", i, ack_block)));
-                                    } else {
-                                        Ok(())
-                                    }
-                                },
-                                Request::ERR => {
-                                    Err(
-                                        Error::Str(format!("error:{}", CStr::from_bytes_with_nul(&ack_buf[2..]).unwrap().to_str().unwrap()))
-                                    )
-                                }
-                                _ => Err(Error::Str("expected ACK".to_string())),
-                            }?;
+                            sock.recv(&mut ack_buf)?;
+                            let r = parse_ack(&ack_buf)?;
+                            if i!=r {
+                                return Err(Error::Str(format!("ack failed for packet {}, got {}",i,r)));
+                            }
                         }
                         
                         // If data.len() is a multiple of 512, we must send an empty packet
-                        if data.len() > 0 && data.len() % 512 == 0 {
+                        if data.len() > 0 && data.len() % packet_len == 0 {
                              let mut packet = Vec::with_capacity(4);
                              packet.extend_from_slice(&(Request::DATA as u16).to_be_bytes());
                              packet.extend_from_slice(&((packet_num + 1) as u16).to_be_bytes());
@@ -98,6 +120,7 @@ where
                              let mut ack_buf = [0u8; 1024];
                              let _ = sock.recv_from(&mut ack_buf);
                         }
+                        /*
                         if data.len() == 0 {
                              let mut packet = Vec::with_capacity(4);
                              packet.extend_from_slice(&(Request::DATA as u16).to_be_bytes());
@@ -105,7 +128,7 @@ where
                              sock.send_to(packet.as_slice(), addr)?;
                              let mut ack_buf = [0u8; 1024];
                              let _ = sock.recv_from(&mut ack_buf);
-                        }
+                        }*/
 
 
                         Ok(())
@@ -121,7 +144,25 @@ where
                 Ok(())
             }();
         });
+        //sleep(time::Duration::from_millis(100000000));
     }
+}
+pub fn parse_ack(buf: &[u8])->Result<u16,Error>{
+    let ack_req_num = ((buf[0] as u16) << 8) + (buf[1] as u16);
+    let ack_req: Request = Request::try_from(ack_req_num)?;
+    match ack_req {
+        Request::ACK => {
+            let ack_block = ((buf[2] as u16) << 8) + (buf[3] as u16);
+            Ok(ack_block)
+        },
+        Request::ERR => {
+            Err(
+                Error::Str(format!("error:{}", CStr::from_bytes_with_nul(&buf[3..]).unwrap().to_str()?))
+            )
+        }
+        _ => Err(Error::Str("expected ACK".to_string())),
+    }
+
 }
 pub fn send_error(err:ErrorID, sock:UdpSocket,addr:SocketAddr)->Result<(),Error>{
     let err_num = err.get_id();
@@ -131,6 +172,21 @@ pub fn send_error(err:ErrorID, sock:UdpSocket,addr:SocketAddr)->Result<(),Error>
     packet.extend_from_slice(&err_num.to_be_bytes());
     packet.extend_from_slice(CString::new(<ErrorID as Into<String>>::into(err).as_str())?.to_bytes_with_nul());
     sock.send_to(packet.as_slice(),addr)?;
+    Ok(())
+}
+pub fn send_oack(sock:&UdpSocket,addr:SocketAddr,options:Vec<TftpOption>)->Result<(),Error>{
+    let mut packet = Vec::new();
+    packet.extend_from_slice(&(Request::OACK as u16).to_be_bytes());
+    for opt in options{
+        packet.extend_from_slice(CString::new::<String>(opt.name.into())?.to_bytes_with_nul());
+        packet.extend_from_slice(CString::new(opt.value.to_string())?.to_bytes_with_nul());
+    }
+    sock.send_to(packet.as_slice(),addr)?;
+    let mut buf = [0u8; 1024];
+    sock.recv(&mut buf)?;
+    if parse_ack(&buf)? !=0{
+        return Err(Error::Str("oack failed".to_string()));
+    }
     Ok(())
 }
 
@@ -188,6 +244,7 @@ pub enum Request {
     DATA = 3,
     ACK = 4,
     ERR = 5,
+    OACK = 6, //option ack
 }
 impl TryFrom<u16> for Request{
     type Error = String;
@@ -240,6 +297,48 @@ impl ErrorID{
             ErrorID::NoSuchUser(s)=>{
                 s
             }
+        }
+    }
+}
+pub struct TftpOption{
+    pub name:TftpOptionType,
+    pub value:usize,
+}
+impl TftpOption{
+    pub fn from_vec(data:Vec<String>)->Result<Vec<TftpOption>,Error>{
+
+        data.chunks_exact(2).map(|x| {
+            Ok(TftpOption{
+                name:TftpOptionType::try_from(x[0].to_string())?,
+                value:x[1].parse::<usize>().unwrap_or(0),
+            })
+        }).collect()
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug,Clone,Eq,PartialEq)]
+pub enum TftpOptionType{
+    tsize,
+    blksize,
+    timeout,
+}
+impl TryFrom<String> for TftpOptionType{
+    type Error = String;
+    fn try_from(value:String)->Result<Self,Self::Error>{
+        match value.to_lowercase().as_str(){
+            "tsize" => Ok(TftpOptionType::tsize),
+            "blksize" => Ok(TftpOptionType::blksize),
+            "timeout" => Ok(TftpOptionType::timeout),
+            _ => Err(format!("invalid option type:{}",value)),
+        }
+    }
+}impl Into<String> for TftpOptionType{
+    fn into(self) -> String {
+        match self {
+            TftpOptionType::tsize => "tsize".to_string(),
+            TftpOptionType::blksize => "blksize".to_string(),
+            TftpOptionType::timeout => "timeout".to_string(),
         }
     }
 }

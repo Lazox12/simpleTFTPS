@@ -6,4 +6,8 @@ edition = "2024"
 [lib]
 crate-type = ["staticlib", "rlib"]
 
+[[bin]]
+name = "serve_file"
+path = "src/bin/serve_file.rs"
+
 [dependencies]
