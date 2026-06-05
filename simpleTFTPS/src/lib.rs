@@ -29,7 +29,7 @@ where
         let mut buf = [0u8; 1024];
         let (_len, addr) = sock.recv_from(&mut buf)?;
         thread::spawn(move || {
-            let _res:Result<(),Error> = || -> Result<(), Error> {
+            let res:Result<(),Error> = || -> Result<(), Error> {
 
                 //child process
                 let req_num = ((buf[0] as u16) << 8) + (buf[1] as u16);
@@ -61,7 +61,7 @@ where
 
                 let options = TftpOption::from_vec(options)?;
                 let mut accepted_options = vec![];
-                let sock = UdpSocket::bind(SocketAddr::new(IpAddr::from([0,0,0,0]),9002))?; // open socket on a new emply port for the current Request
+                let sock = UdpSocket::bind(SocketAddr::new(IpAddr::from([0,0,0,0]),0))?; // open socket on a new emply port for the current Request
 
                 match req {
                     Request::RRQ => {
@@ -100,7 +100,7 @@ where
                             }else{
                                 packet.extend_from_slice(&data[start..end]);
                             }
-                            println!("sending packet {} of {} from port {}",i,packet_num, sock.local_addr().unwrap().port());
+                            //println!("sending packet {} of {} from port {}",i,packet_num, sock.local_addr().unwrap().port());
                             sock.send_to(packet.as_slice(), addr)?;
                             
                             let mut ack_buf = [0u8; 1024];
@@ -143,6 +143,9 @@ where
 
                 Ok(())
             }();
+            if res.is_err(){
+                print!("{:?}",res.err().unwrap())
+            }
         });
         //sleep(time::Duration::from_millis(100000000));
     }
@@ -157,7 +160,7 @@ pub fn parse_ack(buf: &[u8])->Result<u16,Error>{
         },
         Request::ERR => {
             Err(
-                Error::Str(format!("error:{}", CStr::from_bytes_with_nul(&buf[3..]).unwrap().to_str()?))
+                Error::Str(format!("error:{}", CStr::from_bytes_with_nul(&buf[3..]).or(Err("got error, failed to parse msg".to_string()))?.to_str()?))
             )
         }
         _ => Err(Error::Str("expected ACK".to_string())),
